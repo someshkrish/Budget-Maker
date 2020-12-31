@@ -129,7 +129,9 @@ var budgetController = (function (){
                 budget: data.budget,
                 income: data.totals.inc,
                 expense: data.totals.exp,
-                percentage: data.percentage
+                percentage: data.percentage,
+                expensesArray: data.allItems.exp,
+                incomeArray: data.allItems.inc
             }
         }
     };
@@ -152,7 +154,9 @@ var uiController = (function (){
         percentageLabel  : ".budget__expenses--percentage",
         container        : ".container",
         expensesPercentageLabel   : ".item__percentage",
-        dateLabel        : ".budget__title--month"
+        dateLabel        : ".budget__title--month",
+        ChartInc         : ".chart-inc",
+        ChartExp         : ".chart-exp",
     };
 
     var formatNumber = function(num, type){
@@ -181,6 +185,27 @@ var uiController = (function (){
         }
     };
 
+    var calculatePoint = function(i, intervalSize, colorRangeInfo){
+        var {colorStart, colorEnd, useEndAsStart} = colorRangeInfo;
+        return(useEndAsStart
+          ? (colorEnd - (i*intervalSize))
+          : (colorStart + (i*intervalSize)));
+    };
+
+    var interpolateColors = function(dataLength, colorScale, colorRangeInfo){
+        var {colorStart, colorEnd} = colorRangeInfo;
+        var colorRange = colorEnd-colorStart;
+        var intervalSize = colorRange / dataLength;
+        var i, colorPoint;
+        var colorArray = [];
+
+        for(i=0; i<dataLength; i++){
+            colorPoint = calculatePoint(i, intervalSize, colorRangeInfo);
+            colorArray.push(colorScale(colorPoint));
+        }
+
+        return colorArray;
+    };
     //public
     return{
         getinput: function(){
@@ -301,6 +326,85 @@ var uiController = (function (){
             document.querySelector(DOMstrings.inputBtn).classList.toggle('red');
         },
 
+        chartDisplay: function(chartType, chartText, dataArray, chartClass, mychart) {
+            const array = dataArray.map(curr => curr.value);
+            const labelsArray = dataArray.map(curr => curr.description);
+            const dataLength = dataArray.length;
+            let colorScale = d3.interpolateCool;
+            if(chartClass.includes("exp")){
+                colorScale = d3.interpolateRainbow;
+            }
+            const element    = document.querySelector(chartClass);
+            if(dataLength!== 0){
+                element.style.display = "flex";
+            }
+            else{
+                element.style.display = "none";
+            }
+            const colorRangeInfo = {
+                colorStart: 0,
+                colorEnd: 1,
+                useEndAsStart: false,
+            };
+            //Create color array
+            var colors = interpolateColors(dataLength, colorScale, colorRangeInfo); 
+
+            //destroying the old chart
+            if(mychart){
+                mychart.destroy();
+            }
+
+            mychart = new Chart(element, {
+                type: chartType,
+                data: {
+                  labels: labelsArray,
+                  datasets: [{
+                    label: "Budget",
+                    backgroundColor: colors,
+                    hoverBackgroundColor: colors,
+                    data: array
+                  }]
+                },
+                options: {
+                  title: {
+                    display: true,
+                    text: chartText
+                  },
+                  responsive: true,
+                  legend: {
+                    display: false,
+                  },
+                  hover: {
+                    onHover: function(e) {
+                    var point = this.getElementAtEvent(e);
+                    e.target.style.cursor = point.length ? 'pointer' : 'default';
+                   },
+                 },
+                 scales: {
+                     xAxes: [{
+                        gridLines: {
+                            // color: "rgba(0, 0, 0, 0)",
+                            display: false,
+                        }
+                    }],
+                    yAxes: [{
+                        gridLines: {
+                            // color: "rgba(0, 0, 0, 0)",
+                            display: false,
+                        },
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                  }
+                }
+            });
+            if(dataLength === 0) {
+                mychart.destroy();
+            }
+            return mychart;
+        },
+
         getDOMstrings : function() {
             return DOMstrings;
         }
@@ -309,6 +413,9 @@ var uiController = (function (){
 
 // Controller module
 var controller = (function(bgtctrl, uictrl){
+  //Creating two chart and string variables
+  var chartInc, chartExp, chartPie, strInc = "Income Bar Graph", strExp = "Expenses Bar Graph";
+
   //This function is used to add all the initialization and event listeners to the application.
   var setupEventlistener = function(){
     var DOM = uiController.getDOMstrings();
@@ -350,6 +457,8 @@ var controller = (function(bgtctrl, uictrl){
 
   var ctrlAddItem = function(){
     var input, newItem;
+      //0. Get the class names
+      var DOM = uiController.getDOMstrings();
 
       //1. Get the field input data
       input = uictrl.getinput();
@@ -369,6 +478,13 @@ var controller = (function(bgtctrl, uictrl){
 
           //6. Calculate and Update Percentage
           updatePercentage();
+
+          //7. Modify the chart for income
+          chartInc = uictrl.chartDisplay("bar", strInc, bgtctrl.getBudget().incomeArray,  DOM.ChartInc, chartInc);
+
+          //8. Modify the chart for expenses
+          chartExp = uictrl.chartDisplay("bar", strExp, bgtctrl.getBudget().expensesArray, DOM.ChartExp, chartExp);
+
       } else {
           alert("Please enter a valid description and value.");
       }
@@ -376,6 +492,9 @@ var controller = (function(bgtctrl, uictrl){
 
     var ctrlDeleteItem = function(event) {
         var itemID, splitID, type, ID;
+
+        //Get the class names
+        var DOM = uiController.getDOMstrings();
         
         //traversing the DOM to get the id (eg., inc-0, exp-0, inc-1, exp-1 etc.,)
         itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
@@ -398,6 +517,13 @@ var controller = (function(bgtctrl, uictrl){
 
             //4. Calculate and Update percentages
             updatePercentage();
+
+            //5. Modify the chart for income
+            chartInc = uictrl.chartDisplay("bar", strInc, bgtctrl.getBudget().incomeArray, DOM.ChartInc, chartInc);
+
+            //6. Modify the chart for expenses
+            chartExp = uictrl.chartDisplay("bar", strExp, bgtctrl.getBudget().expensesArray, DOM.ChartExp, chartExp);
+
         }
 
     };
