@@ -5,6 +5,15 @@
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:100,300,400,600" rel="stylesheet" type="text/css">
         <link href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" type="text/css">
         <link type="text/css" rel="stylesheet" href="style.css">
+
+        <!-- Import D3 Scale Chromatic via CDN -->
+        <script src="https://d3js.org/d3-color.v1.min.js"></script>
+        <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+        <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+        <!-- Import Chart.js via CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
+
         <title>Budgety</title>
     </head>
     <body>
@@ -41,8 +50,8 @@
             <div class="add">
                 <div class="add__container">
                     <select class="add__type">
-                        <option value="inc" selected>+</option>
-                        <option value="exp">-</option>
+                        <option value="inc" selected>Inc</option>
+                        <option value="exp">Exp</option>
                     </select>
                     <input type="text" class="add__description" placeholder="Add description">
                     <input type="number" class="add__value" placeholder="Value">
@@ -116,9 +125,16 @@
                         
                     </div>
                 </div>
+
+                <div class="chart-container" style="position: relative; height:35vh; width:35vw">
+                    <canvas class="chart chart-inc"></canvas>
+                </div>
+
+                <div class="chart-container" style="position: relative; height:35vh; width:35vw">
+                    <canvas class="chart chart-exp"></canvas>
+                </div>
+                
             </div>
-            
-            
         </div>
         
         <script src="app.js"></script>
