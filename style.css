@@ -178,7 +178,10 @@ body {
 /***** LISTS *****/
 .container {
     width: 1000px;
-    margin: 60px auto;
+    margin: 5% 10%;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .income {
@@ -276,3 +279,10 @@ h2 {
 .unpaid .item__percentage { box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.1); }
 .unpaid:hover .item__description { font-weight: 900; }
 
+.chart-container {
+    margin-top: 5%;
+}
+
+.chart-exp {
+    padding-left: 20px;
+}
